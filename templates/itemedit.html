@@ -1,0 +1,40 @@
+{% extends "main.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="col-xs-12">
+        <a href="{{url_for('brand', brand_id=brand_id)}}" class="btn btn-primary">
+            <strong><< BACK TO BRAND</strong>
+        </a>
+    </div>
+    <div class="col-xs-12">
+        <div class="jumbotron">
+        <h2>Edit Clothing Item</h2>
+            <form action="{{ url_for('itemnew', brand_id=brand_id)}}" method="POST">
+                <div class="form-group">
+                    <label for="clothingname">New Clothing Item Name:</label>
+                    <input type="text" class="form-control" name="clothingname" id="clothingname" value="{{item.name}}">
+                </div>
+                <div class="form-group">
+                    <label for="picurl">Picture URL (optional):</label>
+                    <input type="text" class="form-control" name="picurl" id="picurl" value="{{item.picture}}">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description (optional):</label>
+                    <input type="text" class="form-control" name="description" id="description" value="{{item.description}}">
+                </div>
+                <div class="form-group">
+                    <label for="price">Price:</label>
+                    <input type="text" class="form-control" name="price" id="price" value="{{item.price}}">
+                </div>
+                <div class="form-group">
+                    <label for="stockamount">Amount in Stock:</label>
+                    <input type="text" class="form-control" name="stockamount" id="stockamount" value="{{item.stockamount}}">
+                </div>
+                <button type="submit" class="btn btn-default">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

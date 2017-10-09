@@ -1,0 +1,26 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xs-12">
+        <div class="jumbotron">
+            <h2>Create New Brand</h2>
+            <form action="{{ url_for('brandnew')}}" method="POST">
+              <div class="form-group">
+                <label for="brandname">New Brand Name:</label>
+                <input type="text" class="form-control" name="brandname" id="brandname">
+              </div>
+              <div class="form-group">
+                <label for="logourl">Logo URL (optional):</label>
+                <input type="text" class="form-control" name="logourl" id="logourl">
+              </div>
+              <div class="form-group">
+                <label for="description">Description (optional):</label>
+                <input type="text" class="form-control" name="description" id="description">
+              </div>
+              <button type="submit" class="btn btn-default">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "main.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="row">
+    <div class="col-xs-12">
+        <a href="{{url_for('brands')}}" class="btn btn-primary">
+            <strong><< BACK TO BRANDS</strong>
+        </a>
+    </div>
+    <div class="row">
+    <div class="col-xs-12">
+        <div class="jumbotron">
+            <h2>Edit Brand</h2>
+            <form action="{{ url_for('brandedit', brand_id=brand.id)}}" method="POST">
+              <div class="form-group">
+                <label for="brandname">Edit Brand Name:</label>
+                <input type="text" class="form-control" name="brandname" id="brandname" value="{{brand.name}}">
+              </div>
+              <div class="form-group">
+                <label for="logourl">Logo URL (optional):</label>
+                <input type="text" class="form-control" name="logourl" id="logourl" value="{{brand.picture}}">
+              </div>
+              <div class="form-group">
+                <label for="description">Description (optional):</label>
+                <input type="text" class="form-control" name="description" id="description" value="{{brand.description}}">
+              </div>
+              <button type="submit" class="btn btn-default">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "main.html" %}
+{% block content %}
+
+
+<div class="row">
+    <div class="col-xs-12">
+        <a href="{{url_for('brands')}}" class="btn btn-primary">
+        <strong><< BACK TO BRANDS</strong>
+        </a>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="jumbotron">
+        <h2>Are you sure you want to delete the {{brand.name}} brand?</h2>
+        <form action="#" method="POST">
+        <button type="submit" class="btn btn-danger">DELETE {{brand.name}} NOW!</button>
+        </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
