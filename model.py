@@ -14,6 +14,15 @@ class Brand(Base):
     picture = Column(String)
     description = Column(String)
 
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'picture': self.picture,
+            'descritpion': self.description
+        }
+
 class BrandAddress(Base):
     __tablename__ = 'brandaddress'
     id = Column(Integer, primary_key=True)
@@ -35,6 +44,17 @@ class ClothingItem(Base):
     stockamount = Column(Integer)
     brand_id = Column(Integer, ForeignKey('brand.id'))
     brand = relationship(Brand)
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'picture': self.picture,
+            'descritpion': self.description,
+            'price': self.price,
+            'stockamount': self.stockamount
+        }
 
 
 engine = create_engine('sqlite:///clothing.db')
