@@ -22,10 +22,15 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
+
+
 @app.route('/')
 @app.route('/index')
 def Index():
-    return render_template('index.html')
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+    login_session['state'] = state
+    print login_session
+    return render_template('index.html', STATE=login_session['state'])
 
 
 @app.route('/login')
@@ -98,44 +103,52 @@ def gconnect():
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
-    return redirect('/')
+    return render_template('loginredirect.html')
 
 
 @app.route('/gdisconnect')
 def gdisconnect():
+    #Only disconnect a connected user.
     access_token = login_session.get('access_token')
     if access_token is None:
-        print 'Access Token is None'
         response = make_response(json.dumps('Current user not connected.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
     print 'In gdisconnect access token is %s', access_token
     print 'User name is: '
     print login_session['username']
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+
+    #Execute HTTP GET request to revoke current token.
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
+    print url
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
+
     print 'result is '
     print result
+
     if result['status'] == '200':
+        #Reset the user's session.
         del login_session['access_token']
         del login_session['gplus_id']
         del login_session['username']
         del login_session['email']
         del login_session['picture']
-        response = make_response(json.dumps('Successfully disconnected.'), 200)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+
+        return redirect('/')
+
     else:
-        response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+        response = make_response(json.dumps('Failed to revoke token for given user.'), 400)
         response.headers['Content-Type'] = 'application/json'
         return response
+
+
 
 
 @app.route('/brands')
 def brands():
     brands = session.query(Brand)
-    return render_template('brands.html', brands=brands)
+    return render_template('brands.html', brands=brands, login_session=login_session, STATE=login_session['state'])
 
 @app.route('/brands/json/')
 def brandsjson():
@@ -160,7 +173,7 @@ def brandnew():
         except Exception:
             return Exception
     else:
-        return render_template('brandnew.html')
+        return render_template('brandnew.html', login_session=login_session)
 
 
 # edit selected brand
@@ -178,7 +191,7 @@ def brandedit(brand_id):
             editedbrand.description = request.form['description']
         return redirect(url_for('brands'))
     else:
-        return render_template('brandedit.html', brand=editedbrand)
+        return render_template('brandedit.html', brand=editedbrand, login_session=login_session)
 
 
 # delete selected brand
@@ -192,7 +205,7 @@ def branddelete(brand_id):
         session.commit()
         return redirect(url_for(brands))
     else:
-        return render_template('branddelete.html', brand=brandToDelete)
+        return render_template('branddelete.html', brand=brandToDelete, login_session=login_session)
 
 
 # next two routes are logically transitory and synonymous - see all items in brand
@@ -240,7 +253,7 @@ def itemnew(brand_id):
         session.commit()
         return redirect(url_for('brand', brand_id=brand_id))
     else:
-        return render_template('itemnew.html', brand_id=brand_id)
+        return render_template('itemnew.html', brand_id=brand_id, login_session=login_session)
 
 # see selected item under selected brand
 @app.route('/brand/<int:brand_id>/item/<int:clothingitem_id>/')
@@ -270,7 +283,7 @@ def itemedit(brand_id, clothingitem_id):
         return redirect(url_for('brand', brand_id=brand_id))
 
     else:
-        return render_template('itemedit.html', brand_id=brand_id, clothingitem_id=clothingitem_id, item=editedItem)
+        return render_template('itemedit.html', brand_id=brand_id, clothingitem_id=clothingitem_id, item=editedItem, login_session=login_session)
 
 # delete selected clothing item under selected brand
 @app.route('/brand/<int:brand_id>/item/<int:clothingitem_id>/delete')
@@ -284,7 +297,7 @@ def itemdelete(brand_id, clothingitem_id):
         session.commit()
         return redirect(url_for('brand', brand_id=brand.id))
     else:
-        return render_template('itemdelete.html', brand_id=brand.id, item=itemToDelete)
+        return render_template('itemdelete.html', brand_id=brand.id, item=itemToDelete, login_session=login_session)
 
 
 
