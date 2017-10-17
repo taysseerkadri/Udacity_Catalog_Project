@@ -23,6 +23,7 @@ class Brand(Base):
             'descritpion': self.description
         }
 
+
 class BrandAddress(Base):
     __tablename__ = 'brandaddress'
     id = Column(Integer, primary_key=True)
@@ -33,6 +34,7 @@ class BrandAddress(Base):
     country = Column(String(150))
     brand_id = Column(Integer, ForeignKey('brand.id'))
     brand = relationship(Brand)
+
 
 class ClothingItem(Base):
     __tablename__ = 'clothingitem'

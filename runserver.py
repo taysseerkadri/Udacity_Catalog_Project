@@ -1,19 +1,20 @@
-from flask import Flask, render_template, request, redirect,jsonify, url_for, flash, make_response
+from flask import Flask, render_template, request, redirect, \
+    jsonify, url_for, flash, make_response
 from flask import session as login_session
-import random, string
-app = Flask(__name__)
-
-import httplib2, json, requests
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from model import Base, Brand, BrandAddress, ClothingItem
-
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
+import random
+import string
+import httplib2
+import json
+import requests
 
-CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
-
+app = Flask(__name__)
+CLIENT_ID = json.loads(open('client_secrets.json', 'r').
+                       read())['web']['client_id']
 
 engine = create_engine('sqlite:///clothing.db')
 Base.metadata.bind = engine
@@ -22,12 +23,11 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-
-
 @app.route('/')
 @app.route('/index')
 def Index():
-    state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in xrange(32))
     login_session['state'] = state
     print login_session
     return render_template('index.html', STATE=login_session['state'])
@@ -35,7 +35,8 @@ def Index():
 
 @app.route('/login')
 def showLogin():
-    state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in xrange(32))
     login_session['state'] = state
     return render_template("login.html", STATE=state)
 
@@ -53,7 +54,8 @@ def gconnect():
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
-        response = make_response(json.dumps('Failed to upgrade the authorization code.'), 401)
+        response = make_response(json.dumps('Failed to upgrade the '
+                                            'authorization code.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -85,7 +87,8 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
+        response = make_response(json.dumps('Current user is'
+                                            ' already connected.'),
                                  200)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -108,17 +111,18 @@ def gconnect():
 
 @app.route('/gdisconnect')
 def gdisconnect():
-    #Only disconnect a connected user.
+    # Only disconnect a connected user.
     access_token = login_session.get('access_token')
     if access_token is None:
-        response = make_response(json.dumps('Current user not connected.'), 401)
+        response = make_response(json.dumps('Current user'
+                                            ' not connected.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
     print 'In gdisconnect access token is %s', access_token
     print 'User name is: '
     print login_session['username']
 
-    #Execute HTTP GET request to revoke current token.
+    # Execute HTTP GET request to revoke current token.
     url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
     print url
     h = httplib2.Http()
@@ -128,7 +132,7 @@ def gdisconnect():
     print result
 
     if result['status'] == '200':
-        #Reset the user's session.
+        # Reset the user's session.
         del login_session['access_token']
         del login_session['gplus_id']
         del login_session['username']
@@ -138,17 +142,20 @@ def gdisconnect():
         return redirect('/')
 
     else:
-        response = make_response(json.dumps('Failed to revoke token for given user.'), 400)
+        response = make_response(json.dumps('Failed to revoke token'
+                                            ' for given user.'), 400)
         response.headers['Content-Type'] = 'application/json'
         return response
-
-
 
 
 @app.route('/brands')
 def brands():
     brands = session.query(Brand)
-    return render_template('brands.html', brands=brands, login_session=login_session, STATE=login_session['state'])
+    return render_template('brands.html',
+                           brands=brands,
+                           login_session=login_session,
+                           STATE=login_session['state'])
+
 
 @app.route('/brands/json/')
 def brandsjson():
@@ -166,7 +173,8 @@ def brandnew():
             brandname = request.form['brandname']
             logourl = request.form['logourl']
             description = request.form['description']
-            newbrand = Brand(name=brandname, picture=logourl, description=description)
+            newbrand = Brand(name=brandname, picture=logourl,
+                             description=description)
             session.add(newbrand)
             session.commit()
             return redirect(url_for('brands'))
@@ -191,7 +199,8 @@ def brandedit(brand_id):
             editedbrand.description = request.form['description']
         return redirect(url_for('brands'))
     else:
-        return render_template('brandedit.html', brand=editedbrand, login_session=login_session)
+        return render_template('brandedit.html',
+                               brand=editedbrand, login_session=login_session)
 
 
 # delete selected brand
@@ -199,34 +208,42 @@ def brandedit(brand_id):
 def branddelete(brand_id):
     if 'username' not in login_session:
         return redirect('/login')
-    brandToDelete =  session.query(Brand).filter_by(id=brand_id).one()
+    brandToDelete = session.query(Brand).filter_by(id=brand_id).one()
     if request.method == 'POST':
         session.delete(brandToDelete)
         session.commit()
         return redirect(url_for(brands))
     else:
-        return render_template('branddelete.html', brand=brandToDelete, login_session=login_session)
+        return render_template('branddelete.html',
+                               brand=brandToDelete,
+                               login_session=login_session)
 
 
-# next two routes are logically transitory and synonymous - see all items in brand
+# next two routes are logically transitory
+# and synonymous - see all items in brand
 @app.route('/brand/<int:brand_id>/')
 @app.route('/brand/<int:brand_id>/items')
 def brand(brand_id):
-    items = session.query(ClothingItem).filter_by(brand_id=brand_id).all()
-    return render_template('brand.html', brand_id=brand_id, items=items)
+    items = session.query(ClothingItem). \
+        filter_by(brand_id=brand_id).all()
+    return render_template('brand.html',
+                           brand_id=brand_id,
+                           items=items)
+
 
 @app.route('/brand/<int:brand_id>/items/json')
 def branditemsjson(brand_id):
-    branditems = session.query(ClothingItem).filter_by(brand_id=brand_id).all()
+    branditems = session.query(ClothingItem). \
+        filter_by(brand_id=brand_id).all()
     return jsonify(BrandItems=[b.serialize for b in branditems])
 
 
 # create a new item under selected brand
-@app.route('/brand/<int:brand_id>/item/new', methods=['GET','POST'])
+@app.route('/brand/<int:brand_id>/item/new', methods=['GET', 'POST'])
 def itemnew(brand_id):
     if 'username' not in login_session:
         return redirect('/login')
-    brand = session.query(Brand).filter_by(id = brand_id).one()
+    brand = session.query(Brand).filter_by(id=brand_id).one()
     if request.method == 'POST':
         price = request.form['price']
 
@@ -253,18 +270,19 @@ def itemnew(brand_id):
         session.commit()
         return redirect(url_for('brand', brand_id=brand_id))
     else:
-        return render_template('itemnew.html', brand_id=brand_id, login_session=login_session)
+        return render_template('itemnew.html',
+                               brand_id=brand_id, login_session=login_session)
+
 
 # see selected item under selected brand
 @app.route('/brand/<int:brand_id>/item/<int:clothingitem_id>/')
-
-
 # edit selected clothing item under selected brand
 @app.route('/brand/<int:brand_id>/item/<int:clothingitem_id>/edit')
 def itemedit(brand_id, clothingitem_id):
     if 'username' not in login_session:
         return redirect('/login')
-    editedItem = session.query(ClothingItem).filter_by(id=clothingitem_id).one()
+    editedItem = session.query(ClothingItem). \
+        filter_by(id=clothingitem_id).one()
     brand = session.query(Brand).filter_by(id=brand_id).one()
 
     if request.method == 'POST':
@@ -283,26 +301,32 @@ def itemedit(brand_id, clothingitem_id):
         return redirect(url_for('brand', brand_id=brand_id))
 
     else:
-        return render_template('itemedit.html', brand_id=brand_id, clothingitem_id=clothingitem_id, item=editedItem, login_session=login_session)
+        return render_template('itemedit.html', brand_id=brand_id,
+                               clothingitem_id=clothingitem_id,
+                               item=editedItem,
+                               login_session=login_session)
+
 
 # delete selected clothing item under selected brand
 @app.route('/brand/<int:brand_id>/item/<int:clothingitem_id>/delete')
 def itemdelete(brand_id, clothingitem_id):
     if 'username' not in login_session:
         return redirect('/login')
-    itemToDelete = session.query(ClothingItem).filter_by(id=clothingitem_id).one()
+    itemToDelete = session.query(ClothingItem). \
+        filter_by(id=clothingitem_id).one()
     brand = session.query(Brand).filter_by(id=brand_id).one()
     if request.method == 'POST':
         session.delete(itemToDelete)
         session.commit()
         return redirect(url_for('brand', brand_id=brand.id))
     else:
-        return render_template('itemdelete.html', brand_id=brand.id, item=itemToDelete, login_session=login_session)
-
+        return render_template('itemdelete.html',
+                               brand_id=brand.id,
+                               item=itemToDelete,
+                               login_session=login_session)
 
 
 if __name__ == '__main__':
     app.secret_key = "secret_key_1"
     app.debug = True
     app.run(host='0.0.0.0', port=5000)
-
