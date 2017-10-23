@@ -26,15 +26,22 @@ session = DBSession()
 @app.route('/')
 @app.route('/index')
 def Index():
+    """
+    Routes to the index page while prepping a state token for potential
+    login session.
+    """
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
-    print login_session
     return render_template('index.html', STATE=login_session['state'])
 
 
 @app.route('/login')
 def showLogin():
+    """
+    Routes to a dedicated login page that has a sole Google login link.
+    Prepares a state token in the process.
+    """
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
@@ -43,6 +50,10 @@ def showLogin():
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
+    """
+    Gathers data from Google Sign In API and places it inside a
+    session variable.
+    """
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state param'), 401)
         response.headers['Content-Type'] = 'application/json'
@@ -111,6 +122,11 @@ def gconnect():
 
 @app.route('/gdisconnect')
 def gdisconnect():
+    """
+    Disconnects from the Google login session by deleting headers,
+    reviking access tokens, and deleting all references for the local
+    login session .
+    """
     # Only disconnect a connected user.
     access_token = login_session.get('access_token')
     if access_token is None:
