@@ -13,6 +13,7 @@ class Brand(Base):
     name = Column(String(250), nullable=False)
     picture = Column(String)
     description = Column(String)
+    creator = Column(String)
 
     @property
     def serialize(self):
@@ -20,7 +21,8 @@ class Brand(Base):
             'id': self.id,
             'name': self.name,
             'picture': self.picture,
-            'descritpion': self.description
+            'descritpion': self.description,
+            'creator': self.creator
         }
 
 
@@ -46,6 +48,7 @@ class ClothingItem(Base):
     stockamount = Column(Integer)
     brand_id = Column(Integer, ForeignKey('brand.id'))
     brand = relationship(Brand)
+    creator = Column(String)
 
     @property
     def serialize(self):
@@ -55,7 +58,8 @@ class ClothingItem(Base):
             'picture': self.picture,
             'descritpion': self.description,
             'price': self.price,
-            'stockamount': self.stockamount
+            'stockamount': self.stockamount,
+            'creator': self.creator
         }
 
 

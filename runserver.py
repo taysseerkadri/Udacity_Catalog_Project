@@ -189,8 +189,9 @@ def brandnew():
             brandname = request.form['brandname']
             logourl = request.form['logourl']
             description = request.form['description']
+            creator = login_session['username']
             newbrand = Brand(name=brandname, picture=logourl,
-                             description=description)
+                             description=description, creator=creator)
             session.add(newbrand)
             session.commit()
             return redirect(url_for('brands'))
@@ -205,18 +206,22 @@ def brandnew():
 def brandedit(brand_id):
     if 'username' not in login_session:
         return redirect('/login')
-    editedbrand = session.query(Brand).filter_by(id=brand_id).one()
-    if request.method == 'POST':
-        if request.form['brandname']:
-            editedbrand.name = request.form['brandname']
-        if request.form['brandname']:
-            editedbrand.picture = request.form['logourl']
-        if request.form['brandname']:
-            editedbrand.description = request.form['description']
-        return redirect(url_for('brands'))
-    else:
-        return render_template('brandedit.html',
-                               brand=editedbrand, login_session=login_session)
+    if 'username' in login_session:
+        editedbrand = session.query(Brand).filter_by(id=brand_id).one()
+        if login_session['username'] == editedbrand.creator:
+            if request.method == 'POST':
+                if request.form['brandname']:
+                    editedbrand.name = request.form['brandname']
+                if request.form['brandname']:
+                    editedbrand.picture = request.form['logourl']
+                if request.form['brandname']:
+                    editedbrand.description = request.form['description']
+                return redirect(url_for('brands'))
+            else:
+                return render_template('brandedit.html',
+                                       brand=editedbrand, login_session=login_session)
+        else:
+            return redirect(url_for('brands'))
 
 
 # delete selected brand
@@ -224,15 +229,19 @@ def brandedit(brand_id):
 def branddelete(brand_id):
     if 'username' not in login_session:
         return redirect('/login')
-    brandToDelete = session.query(Brand).filter_by(id=brand_id).one()
-    if request.method == 'POST':
-        session.delete(brandToDelete)
-        session.commit()
-        return redirect(url_for(brands))
-    else:
-        return render_template('branddelete.html',
-                               brand=brandToDelete,
-                               login_session=login_session)
+    if 'username' in login_session:
+        brandToDelete = session.query(Brand).filter_by(id=brand_id).one()
+        if login_session['username'] == brandToDelete.creator:
+            if request.method == 'POST':
+                session.delete(brandToDelete)
+                session.commit()
+                return redirect(url_for(brands))
+            else:
+                return render_template('branddelete.html',
+                                       brand=brandToDelete,
+                                       login_session=login_session)
+        else:
+            return redirect(url_for('brands'))
 
 
 # next two routes are logically transitory
@@ -273,14 +282,15 @@ def itemnew(brand_id):
             finalstock = 0
         else:
             finalstock = stock
-
+        creator = login_session['username']
         newItem = ClothingItem(
             name=request.form['clothingname'],
             picture=request.form['picurl'],
             description=request.form['description'],
             price=float(finalprice),
             stockamount=int(finalstock),
-            brand_id=brand_id
+            brand_id=brand_id,
+            creator=creator
         )
         session.add(newItem)
         session.commit()
@@ -297,30 +307,34 @@ def itemnew(brand_id):
 def itemedit(brand_id, clothingitem_id):
     if 'username' not in login_session:
         return redirect('/login')
-    editedItem = session.query(ClothingItem). \
-        filter_by(id=clothingitem_id).one()
-    brand = session.query(Brand).filter_by(id=brand_id).one()
+    if 'username' in login_session:
 
-    if request.method == 'POST':
-        if request.form['name']:
-            editedItem.name = request.form['name']
-        if request.form['picture']:
-            editedItem.picture = request.form['picture']
-        if request.form['description']:
-            editedItem.description = request.form['description']
-        if request.form['price']:
-            editedItem.price = request.form['price']
-        if request.form['stockamount']:
-            editedItem.stockamount = request.form['stockamount']
-        session.add(editedItem)
-        session.commit()
-        return redirect(url_for('brand', brand_id=brand_id))
+        editedItem = session.query(ClothingItem). \
+            filter_by(id=clothingitem_id).one()
+        brand = session.query(Brand).filter_by(id=brand_id).one()
+        if login_session['username'] == editedItem.creator:
+            if request.method == 'POST':
+                if request.form['name']:
+                    editedItem.name = request.form['name']
+                if request.form['picture']:
+                    editedItem.picture = request.form['picture']
+                if request.form['description']:
+                    editedItem.description = request.form['description']
+                if request.form['price']:
+                    editedItem.price = request.form['price']
+                if request.form['stockamount']:
+                    editedItem.stockamount = request.form['stockamount']
+                session.add(editedItem)
+                session.commit()
+                return redirect(url_for('brand', brand_id=brand_id))
 
-    else:
-        return render_template('itemedit.html', brand_id=brand_id,
-                               clothingitem_id=clothingitem_id,
-                               item=editedItem,
-                               login_session=login_session)
+            else:
+                return render_template('itemedit.html', brand_id=brand_id,
+                                       clothingitem_id=clothingitem_id,
+                                       item=editedItem,
+                                       login_session=login_session)
+        else:
+            return redirect(url_for('brand', brand_id=brand_id))
 
 
 # delete selected clothing item under selected brand
@@ -328,18 +342,22 @@ def itemedit(brand_id, clothingitem_id):
 def itemdelete(brand_id, clothingitem_id):
     if 'username' not in login_session:
         return redirect('/login')
-    itemToDelete = session.query(ClothingItem). \
-        filter_by(id=clothingitem_id).one()
-    brand = session.query(Brand).filter_by(id=brand_id).one()
-    if request.method == 'POST':
-        session.delete(itemToDelete)
-        session.commit()
-        return redirect(url_for('brand', brand_id=brand.id))
-    else:
-        return render_template('itemdelete.html',
-                               brand_id=brand.id,
-                               item=itemToDelete,
-                               login_session=login_session)
+    if 'username' in login_session:
+        itemToDelete = session.query(ClothingItem). \
+            filter_by(id=clothingitem_id).one()
+        brand = session.query(Brand).filter_by(id=brand_id).one()
+        if login_session['username'] == itemToDelete.creator:
+            if request.method == 'POST':
+                session.delete(itemToDelete)
+                session.commit()
+                return redirect(url_for('brand', brand_id=brand.id))
+            else:
+                return render_template('itemdelete.html',
+                                       brand_id=brand.id,
+                                       item=itemToDelete,
+                                       login_session=login_session)
+        else:
+            return redirect(url_for('brand', brand_id=brand_id))
 
 
 if __name__ == '__main__':
