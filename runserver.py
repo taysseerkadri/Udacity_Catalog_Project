@@ -22,6 +22,10 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+def createToken():
+  state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in xrange(32))
+  return state
 
 @app.route('/')
 @app.route('/index')
@@ -29,21 +33,18 @@ def Index():
     """
     Routes to the index page while prepping a state token for potential
     login session.
-    """
-    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                    for x in xrange(32))
-    login_session['state'] = state
+    """    
+    login_session['state'] = createToken()
     return render_template('index.html', STATE=login_session['state'])
 
 
 @app.route('/login')
 def showLogin():
     """
-    Routes to a dedicated login page that has a sole Google login link.
+    Routes to a dedicated login page that has a single Google login link.
     Prepares a state token in the process.
     """
-    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                    for x in xrange(32))
+    state = createToken()
     login_session['state'] = state
     return render_template("login.html", STATE=state)
 
